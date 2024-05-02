@@ -1,6 +1,6 @@
 {
   "name": "table-get-column",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Extract column(s) data from table file (xlsx, xls, csv).",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
