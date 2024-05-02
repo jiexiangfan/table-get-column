@@ -39,7 +39,7 @@ const fs = __importStar(require("fs"));
 //TODO: Implement better error handlings
 function getColumns(options) {
     return __awaiter(this, void 0, void 0, function* () {
-        const { filePath, columnsToExtract, skipRow = 0, deleteFileAfterProcessing = true, } = options;
+        const { filePath, columnsToExtract, skipRow = 0, deleteFileAfterProcessing = false, } = options;
         try {
             const workbook = xlsx.readFile(filePath);
             const sheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -51,6 +51,7 @@ function getColumns(options) {
             const tableData = table
                 .slice(1)
                 .filter((row) => row.length > 0);
+            // Get the indices of the columns to extract
             const columnIndices = columnsToExtract.map((column) => headers.findIndex((header) => header.toString().trim().toLowerCase() === column.trim().toLowerCase()));
             // Check for columns not found
             if (columnIndices.some((index) => index === -1)) {

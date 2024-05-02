@@ -16,7 +16,9 @@
     "excel",
     "xlsx",
     "xls",
-    "column"
+    "column",
+    "csv",
+    "backend"
   ],
   "author": {
     "name": "Jie Xiang (Jay) FAN",

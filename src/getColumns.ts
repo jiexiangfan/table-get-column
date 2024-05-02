@@ -10,7 +10,7 @@ export async function getColumns(options: GetColumnsOptions): Promise<any[]> {
     filePath,
     columnsToExtract,
     skipRow = 0,
-    deleteFileAfterProcessing = true,
+    deleteFileAfterProcessing = false,
   } = options;
 
   try {
@@ -26,6 +26,7 @@ export async function getColumns(options: GetColumnsOptions): Promise<any[]> {
       .slice(1)
       .filter((row: any[]) => row.length > 0);
 
+    // Get the indices of the columns to extract
     const columnIndices: number[] = columnsToExtract.map((column: string) =>
       headers.findIndex(
         (header: any) =>
