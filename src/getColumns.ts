@@ -48,6 +48,7 @@ export async function getColumns(options: GetColumnsOptions): Promise<any[]> {
     }
 
     const headers: any[] = table[0];
+
     const tableData: any[][] = table
       .slice(1)
       .filter((row: any[]) => row.length > 0);
@@ -61,8 +62,11 @@ export async function getColumns(options: GetColumnsOptions): Promise<any[]> {
     );
 
     // Check for columns not found
-    if (columnIndices.some((index: number) => index === -1)) {
-      throw new Error("One or more columns not found");
+    const notFoundColumns = columnsToExtract.filter(
+      (_, i) => columnIndices[i] === -1
+    );
+    if (notFoundColumns.length > 0) {
+      throw new Error(`Columns not found: ${notFoundColumns.join(", ")}`);
     }
 
     // Res will be an array of JSON objects
