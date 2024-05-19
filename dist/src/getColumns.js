@@ -36,17 +36,42 @@ exports.getColumns = void 0;
 // getColumns.ts
 const xlsx = __importStar(require("xlsx"));
 const fs = __importStar(require("fs"));
-//TODO: Implement better error handlings
+const sync_1 = require("csv-parse/sync");
+// Helper function to extract data from CSV
+function extractDataFromCSV(filePath, skipRow) {
+    const content = fs.readFileSync(filePath, "utf8");
+    const records = (0, sync_1.parse)(content, {
+        skip_empty_lines: true,
+        from_line: skipRow + 1,
+    });
+    return records;
+}
+// Helper function to extract data from Excel
+function extractDataFromExcel(filePath, skipRow) {
+    const workbook = xlsx.readFile(filePath);
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const table = xlsx.utils.sheet_to_json(sheet, {
+        header: 1,
+        range: skipRow,
+    });
+    return table;
+}
 function getColumns(options) {
     return __awaiter(this, void 0, void 0, function* () {
+        var _a;
         const { filePath, columnsToExtract, skipRow = 0, deleteFileAfterProcessing = false, } = options;
         try {
-            const workbook = xlsx.readFile(filePath);
-            const sheet = workbook.Sheets[workbook.SheetNames[0]];
-            const table = xlsx.utils.sheet_to_json(sheet, {
-                header: 1,
-                range: skipRow,
-            });
+            const fileExtension = (_a = filePath.split(".").pop()) === null || _a === void 0 ? void 0 : _a.toLowerCase();
+            let table = [];
+            if (fileExtension === "csv") {
+                table = extractDataFromCSV(filePath, skipRow);
+            }
+            else if (fileExtension === "xls" || fileExtension === "xlsx") {
+                table = extractDataFromExcel(filePath, skipRow);
+            }
+            else {
+                throw new Error("Unsupported file format. Only CSV, XLS, and XLSX files are supported.");
+            }
             const headers = table[0];
             const tableData = table
                 .slice(1)
@@ -54,13 +79,22 @@ function getColumns(options) {
             // Get the indices of the columns to extract
             const columnIndices = columnsToExtract.map((column) => headers.findIndex((header) => header.toString().trim().toLowerCase() === column.trim().toLowerCase()));
             // Check for columns not found
-            if (columnIndices.some((index) => index === -1)) {
-                throw new Error("One or more columns not found");
+            const notFoundColumns = columnsToExtract.filter((_, i) => columnIndices[i] === -1);
+            if (notFoundColumns.length > 0) {
+                throw new Error(`Columns not found: ${notFoundColumns.join(", ")}`);
             }
-            // Res will be an array of arrays, where each sub-array is the row data for the extracted columns
+            // Res will be an array of JSON objects
             const res = tableData
-                .map((row) => columnIndices.map((index) => index >= 0 && index < row.length ? row[index] : undefined))
-                .filter((row) => row.every((cell) => cell !== undefined)); //TODO: make this optional
+                .map((row) => {
+                const jsonRow = {};
+                columnIndices.forEach((index, i) => {
+                    if (index >= 0 && index < row.length) {
+                        jsonRow[columnsToExtract[i]] = row[index];
+                    }
+                });
+                return jsonRow;
+            })
+                .filter((row) => Object.values(row).every((cell) => cell !== undefined)); //TODO: make this optional
             // Remove the uploaded file after processing
             if (deleteFileAfterProcessing) {
                 fs.unlinkSync(filePath);
